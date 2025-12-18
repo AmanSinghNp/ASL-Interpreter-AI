@@ -9,17 +9,29 @@ import numpy as np
 import tensorflow as tf
 import time
 
-from utils import ASL_LETTERS, MODEL_PATH, CONFIDENCE_THRESHOLD, STABILITY_THRESHOLD, normalize_landmarks
+from utils import MODEL_PATH, CONFIDENCE_THRESHOLD, STABILITY_THRESHOLD, normalize_landmarks, load_classes
 
 # --- Model Loading ---
 print("Loading model...")
 try:
     model = tf.keras.models.load_model(MODEL_PATH)
     print("Model loaded successfully!")
+
+    # Load the specific classes this model was trained on (saved during training)
+    ASL_LETTERS = load_classes()
+    out_dim = model.output_shape[-1]
+    if out_dim != len(ASL_LETTERS):
+        print("Error: Model output size does not match loaded class labels.")
+        print(f"  model.output_shape[-1] = {out_dim}")
+        print(f"  len(classes)          = {len(ASL_LETTERS)}")
+        print("Fix: re-run processing + training so saved_model/classes.txt matches the model.")
+        exit(1)
+
+    print(f"Loaded {len(ASL_LETTERS)} classes: {', '.join(ASL_LETTERS)}")
 except Exception as e:
     print(f"Error loading model: {e}")
     print(f"Make sure the model exists at: {MODEL_PATH}")
-    print("Run scripts/train_model.py first if you haven't.")
+    print("Run `python -m scripts.train_model` first if you haven't.")
     exit(1)
 
 # --- MediaPipe Setup ---

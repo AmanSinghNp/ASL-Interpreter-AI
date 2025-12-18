@@ -22,6 +22,8 @@ public/models/
 asl_data.csv
 *.h5
 *.pb
+*.keras
+saved_model/
 
 # IDEs
 .vscode/

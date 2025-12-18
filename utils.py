@@ -3,10 +3,12 @@ ASL Interpreter AI - Shared Utilities
 Centralized configuration and helper functions used across all scripts.
 """
 
+import os
 import numpy as np
 
 # --- Configuration Constants ---
 MODEL_PATH = 'saved_model/asl_model'
+CLASSES_PATH = 'saved_model/classes.txt'
 CONFIDENCE_THRESHOLD = 0.7
 STABILITY_THRESHOLD = 5  # Number of consistent frames for stability
 CSV_FILE = 'asl_data.csv'
@@ -18,6 +20,25 @@ ASL_LETTERS = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M',
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y'
 ]
+
+
+def load_classes(fallback_list=ASL_LETTERS):
+    """
+    Load class names from CLASSES_PATH if available, otherwise use fallback.
+
+    This keeps inference-time labels consistent with the exact label order used
+    during training (label_encoder.classes_).
+    """
+    if os.path.exists(CLASSES_PATH):
+        try:
+            with open(CLASSES_PATH, 'r', encoding='utf-8') as f:
+                classes = [line.strip() for line in f.readlines() if line.strip()]
+            if classes:
+                return classes
+        except Exception:
+            # Fall back on any read/parse error
+            pass
+    return fallback_list
 
 
 def normalize_landmarks(landmarks):
@@ -53,27 +74,29 @@ def normalize_landmarks(landmarks):
     else:
         landmark_list = landmarks
     
-    if not landmark_list:
+    if not landmark_list or len(landmark_list) < 21:
         return None
     
     # Get wrist position (landmark 0) as reference point
     wrist = landmark_list[0]
     
     # Normalize all landmarks relative to wrist position
-    normalized = [
-        {
+    normalized = []
+    wrist_z = wrist.get('z', 0.0)
+    for lm in landmark_list:
+        normalized.append({
             'x': lm['x'] - wrist['x'],
             'y': lm['y'] - wrist['y'],
-            'z': lm['z'] - wrist['z']
-        }
-        for lm in landmark_list
-    ]
+            'z': lm.get('z', 0.0) - wrist_z,
+        })
     
     # Calculate scale factor using distance from wrist to middle finger MCP
     middle_finger_mcp = landmark_list[9]
-    scale_x = abs(middle_finger_mcp['x'] - wrist['x'])
-    scale_y = abs(middle_finger_mcp['y'] - wrist['y'])
-    scale = max(scale_x, scale_y, 0.01)  # Prevent division by zero
+    dist = np.sqrt(
+        (middle_finger_mcp['x'] - wrist['x']) ** 2 +
+        (middle_finger_mcp['y'] - wrist['y']) ** 2
+    )
+    scale = max(float(dist), 0.01)  # Prevent division by zero
     
     # Scale normalize and flatten to feature vector
     # Format: [x0, x1, ..., x20, y0, y1, ..., y20]
@@ -83,7 +106,7 @@ def normalize_landmarks(landmarks):
     for lm in normalized:
         features.append(lm['y'] / scale)
     
-    return np.array([features])
+    return np.array([features], dtype=np.float32)
 
 
 def normalize_landmarks_flat(landmarks):

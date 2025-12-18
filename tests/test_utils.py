@@ -112,18 +112,12 @@ class TestNormalizeLandmarks:
             {'x': 0.5, 'y': 0.5, 'z': 0.0}
             for _ in range(21)
         ]
-        # This would fail if the function doesn't handle dict input
-        # Since all points are the same, we can't normalize properly,
-        # but it should at least not crash
         landmarks_list[9] = {'x': 0.6, 'y': 0.4, 'z': 0.0}  # Make MCP different
-        
-        # Create a mock object that returns None for hasattr check
-        class DictLandmarks:
-            def __init__(self, lst):
-                self.data = lst
-        
-        # The function checks hasattr(landmarks, 'landmark'), so this tests
-        # that it falls back to treating input as list of dicts
+
+        result = normalize_landmarks(landmarks_list)
+        assert result is not None
+        assert result.shape == (1, 42)
+        assert np.all(np.isfinite(result))
 
 
 class TestNormalizeLandmarksFlat:

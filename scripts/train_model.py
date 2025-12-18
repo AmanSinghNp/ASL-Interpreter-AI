@@ -25,7 +25,7 @@ from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from utils import ASL_LETTERS, CSV_FILE
+from utils import ASL_LETTERS, CSV_FILE, CLASSES_PATH
 
 
 def parse_args():
@@ -243,10 +243,10 @@ def train_model(args):
     model.save('saved_model/asl_model')
     print("Model saved to: saved_model/asl_model/")
     
-    # Save label encoder classes for reference
-    with open('saved_model/classes.txt', 'w') as f:
+    # Save label encoder classes for reference (used by the app for correct mapping)
+    with open(CLASSES_PATH, 'w', encoding='utf-8') as f:
         f.write('\n'.join(label_encoder.classes_))
-    print("Classes saved to: saved_model/classes.txt")
+    print(f"Classes saved to: {CLASSES_PATH}")
     
     print("\n" + "=" * 60)
     print("Training Complete!")

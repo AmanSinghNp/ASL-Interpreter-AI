@@ -71,7 +71,7 @@ python asl_app.py
 
 ## Training a Custom Model
 
-This repository includes a pre-trained model (`saved_model/`), but you can train your own to improve accuracy or customize for your needs.
+The model and training data are **generated artifacts** and are not intended to be committed to Git. You can train your own model to improve accuracy or customize for your needs.
 
 ### Option 1: Collect Your Own Data
 
@@ -106,6 +106,7 @@ python -m scripts.train_model --epochs 100 --batch_size 64
 ```
 
 The trained model will be saved to `saved_model/asl_model/`.
+The label list will be saved to `saved_model/classes.txt` (used by the app for correct index→label mapping).
 
 ## Project Structure
 
@@ -116,7 +117,7 @@ ASL-Interpreter-AI/
 ├── asl_data.csv            # Training data (generated)
 ├── requirements.txt        # Python dependencies
 ├── LICENSE                 # MIT License
-├── saved_model/            # Pre-trained TensorFlow model
+├── saved_model/            # Generated TensorFlow model + classes.txt (not committed)
 │   └── asl_model/
 └── scripts/                # Utility scripts
     ├── data_collection.py  # Interactive data gathering tool
