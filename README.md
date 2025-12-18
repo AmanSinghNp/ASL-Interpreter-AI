@@ -1,23 +1,31 @@
 # ASL Interpreter AI
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![TensorFlow 2.15+](https://img.shields.io/badge/tensorflow-2.15+-orange.svg)](https://www.tensorflow.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 A real-time American Sign Language (ASL) recognition application powered by Computer Vision and Deep Learning. This desktop application detects hand gestures via webcam and translates them into text instantly using MediaPipe and TensorFlow.
+
+<!-- Add a demo GIF here: ![Demo](docs/demo.gif) -->
 
 ## Features
 
-- **Real-Time Detection:** Instant feedback using MediaPipe's efficient hand tracking.
-- **High Accuracy:** Custom-trained neural network for classifying ASL alphabets (A-Y, excluding dynamic gestures J/Z).
-- **Offline Capability:** Fully functional without an internet connection after initial setup.
-- **User-Friendly Interface:** Simple OpenCV-based GUI with word construction features.
-- **Extensible:** Includes scripts for data collection and retraining the model on your own dataset.
+- **Real-Time Detection** - Instant feedback using MediaPipe's efficient hand tracking
+- **High Accuracy** - Custom-trained neural network for classifying ASL alphabets (A-Y, excluding dynamic gestures J/Z)
+- **Visual Feedback** - Confidence meter, FPS counter, and letter confirmation animations
+- **Offline Capability** - Fully functional without an internet connection after initial setup
+- **User-Friendly Interface** - Clean OpenCV-based GUI with word construction features
+- **Extensible** - Includes scripts for data collection and retraining the model on your own dataset
 
-## Installation
+## Quick Start
 
 ### Prerequisites
 
 - Python 3.8 or higher
 - A working webcam
+- pip (Python package manager)
 
-### Setup
+### Installation
 
 1. **Clone the Repository**
 
@@ -26,86 +34,175 @@ A real-time American Sign Language (ASL) recognition application powered by Comp
    cd ASL-Interpreter-AI
    ```
 
-2. **Install Dependencies**
+2. **Create a Virtual Environment** (recommended)
+
+   ```bash
+   python -m venv venv
+   
+   # Windows
+   venv\Scripts\activate
+   
+   # macOS/Linux
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
-## Usage
-
 ### Running the Application
-
-To start the ASL Interpreter, run the main application script:
 
 ```bash
 python asl_app.py
 ```
 
-### Controls
+## Controls
 
-| Key           | Action                          |
-| :------------ | :------------------------------ |
-| **Space**     | Add a space to the current word |
-| **Backspace** | Delete the last character       |
-| **C**         | Clear the current word          |
-| **Q**         | Quit the application            |
+| Key         | Action                          |
+| :---------- | :------------------------------ |
+| **Space**   | Add a space to the current word |
+| **Backspace** | Delete the last character     |
+| **C**       | Clear the current word          |
+| **Q**       | Quit the application            |
 
-_Ensure your hand is clearly visible to the camera for best results._
+> **Tip:** Ensure your hand is clearly visible to the camera with good lighting for best results.
 
 ## Training a Custom Model
 
-This repository includes a pre-trained model (`saved_model/`), but you can train your own to improve accuracy or add new signs.
+This repository includes a pre-trained model (`saved_model/`), but you can train your own to improve accuracy or customize for your needs.
 
-### 1. Collect Data
+### Option 1: Collect Your Own Data
 
-Use the data collection script to record landmarks for each letter.
-
-```bash
-python scripts/data_collection.py
-```
-
-_Follow the on-screen instructions to record samples for each sign._
-
-### 2. Process Data
-
-Convert the raw landmarks into a dataset suitable for training.
+Use the interactive data collection tool to record hand landmarks:
 
 ```bash
-python scripts/process_dataset.py
+python -m scripts.data_collection
 ```
 
-_This generates `asl_data.csv`._
+Follow the on-screen instructions to record samples for each ASL letter.
 
-### 3. Train the Model
+### Option 2: Process an Existing Dataset
 
-Train the neural network using the processed data.
+If you have an ASL image dataset organized in folders by letter:
 
 ```bash
-python scripts/train_model.py
+python -m scripts.process_dataset --dataset_dir path/to/your/dataset
 ```
 
-_The new model will automatically replace the one in `saved_model/`._
+### Train the Model
+
+Once you have data in `asl_data.csv`, train the neural network:
+
+```bash
+python -m scripts.train_model
+```
+
+**Training Options:**
+
+```bash
+python -m scripts.train_model --epochs 100 --batch_size 64
+```
+
+The trained model will be saved to `saved_model/asl_model/`.
 
 ## Project Structure
 
 ```
 ASL-Interpreter-AI/
 ├── asl_app.py              # Main desktop application
-├── asl_data.csv            # Dataset containing normalized landmarks
+├── utils.py                # Shared utilities and configuration
+├── asl_data.csv            # Training data (generated)
 ├── requirements.txt        # Python dependencies
+├── LICENSE                 # MIT License
 ├── saved_model/            # Pre-trained TensorFlow model
+│   └── asl_model/
 └── scripts/                # Utility scripts
-    ├── data_collection.py  # Data gathering tool
-    ├── process_dataset.py  # Data preprocessing
-    └── train_model.py      # Model training script
+    ├── data_collection.py  # Interactive data gathering tool
+    ├── process_dataset.py  # Batch image processing
+    ├── train_model.py      # Model training script
+    └── README.md           # Scripts documentation
 ```
 
 ## Technologies
 
-- **[MediaPipe](https://developers.google.com/mediapipe):** For robust hand landmark detection.
-- **[TensorFlow](https://www.tensorflow.org/):** For building and running the neural network classifier.
-- **[OpenCV](https://opencv.org/):** For image processing and the graphical user interface.
+| Technology | Purpose |
+| :--------- | :------ |
+| [MediaPipe](https://developers.google.com/mediapipe) | Hand landmark detection |
+| [TensorFlow](https://www.tensorflow.org/) | Neural network training and inference |
+| [OpenCV](https://opencv.org/) | Image processing and GUI |
+| [scikit-learn](https://scikit-learn.org/) | Data preprocessing and metrics |
+
+## Model Architecture
+
+The classifier is a feed-forward neural network:
+
+- **Input:** 42 features (21 x-coordinates + 21 y-coordinates, normalized)
+- **Hidden Layers:** Dense(128) → Dense(64) → Dense(32) with BatchNorm and Dropout
+- **Output:** Softmax over 24 classes (A-Y, excluding J and Z)
+
+## Troubleshooting
+
+### Camera Issues
+
+**Problem:** "Could not open webcam" error
+
+**Solutions:**
+- Ensure your webcam is connected and not in use by another application
+- Try a different camera by changing `cv2.VideoCapture(0)` to `cv2.VideoCapture(1)` in `asl_app.py`
+- Check camera permissions in your system settings
+
+### Model Issues
+
+**Problem:** "Error loading model" message
+
+**Solutions:**
+- Ensure the model exists at `saved_model/asl_model/`
+- Run `python -m scripts.train_model` to train a new model
+- Check that TensorFlow is properly installed: `python -c "import tensorflow as tf; print(tf.__version__)"`
+
+### Low Accuracy
+
+**Solutions:**
+- Ensure good lighting conditions
+- Keep your hand clearly visible and centered in frame
+- Try retraining with more diverse data
+- Adjust `CONFIDENCE_THRESHOLD` in `utils.py` (default: 0.7)
+
+### Performance Issues
+
+**Problem:** Low FPS or laggy response
+
+**Solutions:**
+- Close other applications using the webcam
+- Reduce webcam resolution if supported
+- Ensure you're not running on a very low-powered machine
+
+## Contributing
+
+Contributions are welcome! Here's how you can help:
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m 'Add amazing feature'`
+4. **Push** to the branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
+
+### Ideas for Contributions
+
+- Add support for dynamic gestures (J, Z)
+- Implement text-to-speech output
+- Add word prediction/autocomplete
+- Create a web-based version
+- Improve the UI/UX design
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- ASL alphabet images from various open datasets
+- MediaPipe team for the excellent hand tracking solution
+- TensorFlow team for the machine learning framework

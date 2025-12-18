@@ -2,130 +2,172 @@
 
 This directory contains Python scripts for training your own ASL recognition model.
 
-## Prerequisites
-
-Install the required Python packages:
+## Quick Start
 
 ```bash
-pip install opencv-python mediapipe pandas scikit-learn tensorflow tensorflowjs
+# From the project root directory:
+
+# Option 1: Collect data interactively
+python -m scripts.data_collection
+
+# Option 2: Process an existing image dataset
+python -m scripts.process_dataset
+
+# Train the model
+python -m scripts.train_model
 ```
 
-## Usage
+## Scripts Overview
 
-### Step 1: Collect Data
+### 1. `data_collection.py` - Interactive Data Collection
 
-Run the data collection script to record hand landmarks for each ASL letter:
+Record hand landmarks for each ASL letter using your webcam.
 
 ```bash
-python data_collection.py
+python -m scripts.data_collection
 ```
 
-**Instructions:**
-- Press a letter key (A-Y, excluding J/Z) to start recording
-- Show that ASL letter sign to the camera
-- The script automatically records 100 samples per letter
-- Press 'q' to quit
-- Press 'r' to reset current letter
+**Controls:**
+- Press a letter key (A-Y, excluding J/Z) to start recording that letter
+- Show the ASL sign to the camera
+- Samples are recorded automatically when a hand is detected
+- Press `R` to reset/deselect the current letter
+- Press `Q` to quit
 
-The script will save data to `asl_data.csv` with:
-- 21 x-coordinates (normalized)
-- 21 y-coordinates (normalized)
-- Letter label
+**Output:** Appends data to `asl_data.csv`
 
-**Recommended:** Collect at least 100 samples per letter for good model performance.
+### 2. `process_dataset.py` - Batch Image Processing
 
-### Step 2: Train Model
-
-Once you have collected data, train the neural network:
+Convert a folder of ASL images into training data.
 
 ```bash
-python train_model.py
+python -m scripts.process_dataset
+python -m scripts.process_dataset --dataset_dir path/to/images --max_samples 500
 ```
 
-This script will:
-1. Load and preprocess the collected data
-2. Create a feed-forward neural network (128 → 64 → 24 neurons)
-3. Train the model with validation split
-4. Evaluate performance
-5. Save the model in TensorFlow format
-6. Convert to TensorFlow.js format
+**Arguments:**
+| Argument | Default | Description |
+| :------- | :------ | :---------- |
+| `--dataset_dir` | `dataset/asl_alphabet_train` | Path to image folders |
+| `--output` | `asl_data.csv` | Output CSV file |
+| `--max_samples` | `1000` | Max images per letter |
 
-### Step 3: Deploy Model
-
-The trained model will be converted to TensorFlow.js format and saved to:
+**Expected Folder Structure:**
 ```
-../public/models/
+dataset/asl_alphabet_train/
+├── A/
+│   ├── image1.jpg
+│   ├── image2.jpg
+│   └── ...
+├── B/
+│   └── ...
+└── ...
 ```
 
-**Files generated:**
-- `model.json` - Model architecture
-- `weights.bin` - Model weights (or multiple .bin files)
+### 3. `train_model.py` - Model Training
 
-Copy these files to your Next.js `public/models/` directory, replacing the placeholder files.
+Train the neural network classifier.
+
+```bash
+python -m scripts.train_model
+python -m scripts.train_model --epochs 100 --batch_size 64
+```
+
+**Arguments:**
+| Argument | Default | Description |
+| :------- | :------ | :---------- |
+| `--epochs` | `50` | Number of training epochs |
+| `--batch_size` | `32` | Training batch size |
+| `--validation_split` | `0.2` | Fraction of data for validation |
+| `--no_plots` | `false` | Skip generating visualization plots |
+
+**Output:**
+- `saved_model/asl_model/` - TensorFlow SavedModel
+- `saved_model/classes.txt` - List of class labels
+- `training_history.png` - Accuracy/loss plots
+- `confusion_matrix.png` - Per-class performance visualization
 
 ## Model Architecture
 
-The model is a simple feed-forward neural network:
-- **Input:** 42 features (21 x-coords, 21 y-coords)
-- **Layer 1:** Dense(128) + ReLU + Dropout(0.3)
-- **Layer 2:** Dense(64) + ReLU + Dropout(0.3)
-- **Output:** Dense(24) + Softmax (one for each letter)
+```
+Input (42 features)
+    ↓
+Dense(128) + BatchNorm + ReLU + Dropout(0.3)
+    ↓
+Dense(64) + BatchNorm + ReLU + Dropout(0.3)
+    ↓
+Dense(32) + ReLU + Dropout(0.2)
+    ↓
+Dense(24) + Softmax
+    ↓
+Output (24 classes: A-Y excluding J, Z)
+```
 
 ## Tips for Better Results
 
-1. **Collect diverse data:**
-   - Vary hand position (left, right, center)
-   - Vary distance from camera
-   - Vary lighting conditions
-   - Have multiple people collect data
+### Data Collection
 
-2. **More samples = better accuracy:**
-   - Minimum: 50 samples per letter
-   - Recommended: 100+ samples per letter
-   - Ideal: 200+ samples per letter
+1. **Vary hand position:** Move your hand around the frame (left, right, center)
+2. **Vary distance:** Near and far from the camera
+3. **Vary lighting:** Different lighting conditions
+4. **Multiple people:** Have different people contribute data
 
-3. **Ensure good data quality:**
-   - Make sure hand is fully visible
-   - Avoid blurry images
-   - Use consistent signing style
+### Sample Counts
 
-4. **Training parameters:**
-   - Adjust `EPOCHS` in `train_model.py` if needed
-   - Monitor validation loss to prevent overfitting
-   - Early stopping is enabled by default
+| Quality Level | Samples per Letter |
+| :------------ | :----------------- |
+| Minimum | 50 |
+| Recommended | 100-200 |
+| Ideal | 500+ |
+
+### Training Tips
+
+- Monitor validation loss - if it starts increasing while training loss decreases, you're overfitting
+- Early stopping is enabled by default (patience=10 epochs)
+- Learning rate reduction is automatic when validation loss plateaus
 
 ## Troubleshooting
 
-**Problem:** "Data file not found"
-- Solution: Run `data_collection.py` first to collect data
+### "Data file not found"
 
-**Problem:** "TensorFlow.js conversion failed"
-- Solution: Install tensorflowjs manually: `pip install tensorflowjs`
-- Then run conversion manually: `tensorflowjs_converter --input_format=tf_saved_model --output_dir=../public/models saved_model/asl_model`
-
-**Problem:** Low accuracy
-- Solution: Collect more diverse training data
-- Try collecting data from multiple signers
-- Ensure consistent hand positioning
-
-**Problem:** Camera not working
-- Solution: Make sure camera permissions are granted
-- Try a different camera device index in `cv2.VideoCapture(0)`
-
-## File Structure
-
+Run data collection or dataset processing first:
+```bash
+python -m scripts.data_collection
+# or
+python -m scripts.process_dataset
 ```
-scripts/
-├── data_collection.py    # Collect hand landmark data
-├── train_model.py        # Train the neural network
-├── README.md            # This file
-└── asl_data.csv         # Generated data file (after collection)
-```
+
+### Low Accuracy
+
+- Collect more diverse training data
+- Ensure consistent, clear hand signs
+- Try collecting data from multiple people
+- Increase training epochs
+
+### Camera Not Working
+
+- Check camera permissions
+- Try a different camera index: edit `cv2.VideoCapture(0)` to `cv2.VideoCapture(1)`
+- Ensure no other application is using the camera
+
+### MediaPipe Not Detecting Hands
+
+- Improve lighting conditions
+- Ensure hand is fully visible in frame
+- Try a plain background
+- Move hand closer to camera
+
+## File Reference
+
+| File | Input | Output |
+| :--- | :---- | :----- |
+| `data_collection.py` | Webcam | `asl_data.csv` |
+| `process_dataset.py` | Image folders | `asl_data.csv` |
+| `train_model.py` | `asl_data.csv` | `saved_model/asl_model/` |
 
 ## Notes
 
-- Letters J and Z are excluded because they require motion/gesture recognition
+- Letters **J** and **Z** are excluded because they require motion/gesture recognition
 - The model only supports static hand signs
-- For production use, consider collecting data from multiple signers for better generalization
-
-
+- For production use, collect data from multiple signers for better generalization
+- All scripts can be run as modules from the project root using `python -m scripts.<script_name>`
