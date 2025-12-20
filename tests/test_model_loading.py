@@ -123,3 +123,4 @@ class TestModelIntegration:
         confidence = np.max(prediction)
         assert 0 <= confidence <= 1
 
+

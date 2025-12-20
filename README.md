@@ -30,7 +30,7 @@ A real-time American Sign Language (ASL) recognition application powered by Comp
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/ASL-Interpreter-AI.git
+   git clone https://github.com/AmanSinghNp/ASL-Interpreter-AI.git
    cd ASL-Interpreter-AI
    ```
 
@@ -38,10 +38,10 @@ A real-time American Sign Language (ASL) recognition application powered by Comp
 
    ```bash
    python -m venv venv
-   
+
    # Windows
    venv\Scripts\activate
-   
+
    # macOS/Linux
    source venv/bin/activate
    ```
@@ -60,12 +60,12 @@ python asl_app.py
 
 ## Controls
 
-| Key         | Action                          |
-| :---------- | :------------------------------ |
-| **Space**   | Add a space to the current word |
-| **Backspace** | Delete the last character     |
-| **C**       | Clear the current word          |
-| **Q**       | Quit the application            |
+| Key           | Action                          |
+| :------------ | :------------------------------ |
+| **Space**     | Add a space to the current word |
+| **Backspace** | Delete the last character       |
+| **C**         | Clear the current word          |
+| **Q**         | Quit the application            |
 
 > **Tip:** Ensure your hand is clearly visible to the camera with good lighting for best results.
 
@@ -128,12 +128,12 @@ ASL-Interpreter-AI/
 
 ## Technologies
 
-| Technology | Purpose |
-| :--------- | :------ |
-| [MediaPipe](https://developers.google.com/mediapipe) | Hand landmark detection |
-| [TensorFlow](https://www.tensorflow.org/) | Neural network training and inference |
-| [OpenCV](https://opencv.org/) | Image processing and GUI |
-| [scikit-learn](https://scikit-learn.org/) | Data preprocessing and metrics |
+| Technology                                           | Purpose                               |
+| :--------------------------------------------------- | :------------------------------------ |
+| [MediaPipe](https://developers.google.com/mediapipe) | Hand landmark detection               |
+| [TensorFlow](https://www.tensorflow.org/)            | Neural network training and inference |
+| [OpenCV](https://opencv.org/)                        | Image processing and GUI              |
+| [scikit-learn](https://scikit-learn.org/)            | Data preprocessing and metrics        |
 
 ## Model Architecture
 
@@ -150,6 +150,7 @@ The classifier is a feed-forward neural network:
 **Problem:** "Could not open webcam" error
 
 **Solutions:**
+
 - Ensure your webcam is connected and not in use by another application
 - Try a different camera by changing `cv2.VideoCapture(0)` to `cv2.VideoCapture(1)` in `asl_app.py`
 - Check camera permissions in your system settings
@@ -159,6 +160,7 @@ The classifier is a feed-forward neural network:
 **Problem:** "Error loading model" message
 
 **Solutions:**
+
 - Ensure the model exists at `saved_model/asl_model/`
 - Run `python -m scripts.train_model` to train a new model
 - Check that TensorFlow is properly installed: `python -c "import tensorflow as tf; print(tf.__version__)"`
@@ -166,6 +168,7 @@ The classifier is a feed-forward neural network:
 ### Low Accuracy
 
 **Solutions:**
+
 - Ensure good lighting conditions
 - Keep your hand clearly visible and centered in frame
 - Try retraining with more diverse data
@@ -176,6 +179,7 @@ The classifier is a feed-forward neural network:
 **Problem:** Low FPS or laggy response
 
 **Solutions:**
+
 - Close other applications using the webcam
 - Reduce webcam resolution if supported
 - Ensure you're not running on a very low-powered machine
