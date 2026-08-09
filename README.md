@@ -105,24 +105,37 @@ python -m scripts.train_model
 python -m scripts.train_model --epochs 100 --batch_size 64
 ```
 
-The trained model will be saved to `saved_model/asl_model/`.
-The label list will be saved to `saved_model/classes.txt` (used by the app for correct index→label mapping).
+Training creates three generated artifacts:
+
+- `saved_model/asl_model.keras` — Keras model used as a fallback
+- `saved_model/asl_model.tflite` — optimized TensorFlow Lite model used by the app
+- `saved_model/classes.txt` — labels used for correct index→letter mapping
+
+The app automatically prefers the TensorFlow Lite model and falls back to Keras if needed. To export a model manually:
+
+```bash
+python -m scripts.export_tflite
+```
 
 ## Project Structure
 
 ```
 ASL-Interpreter-AI/
 ├── asl_app.py              # Main desktop application
+├── model_runtime.py        # TFLite-first model loading and fallback
 ├── utils.py                # Shared utilities and configuration
 ├── asl_data.csv            # Training data (generated)
 ├── requirements.txt        # Python dependencies
 ├── LICENSE                 # MIT License
-├── saved_model/            # Generated TensorFlow model + classes.txt (not committed)
-│   └── asl_model/
+├── saved_model/            # Generated models + classes.txt (not committed)
+│   ├── asl_model.keras
+│   ├── asl_model.tflite
+│   └── classes.txt
 └── scripts/                # Utility scripts
     ├── data_collection.py  # Interactive data gathering tool
     ├── process_dataset.py  # Batch image processing
     ├── train_model.py      # Model training script
+    ├── export_tflite.py    # TensorFlow Lite export script
     └── README.md           # Scripts documentation
 ```
 
@@ -161,8 +174,8 @@ The classifier is a feed-forward neural network:
 
 **Solutions:**
 
-- Ensure the model exists at `saved_model/asl_model/`
-- Run `python -m scripts.train_model` to train a new model
+- Ensure one of `saved_model/asl_model.tflite`, `saved_model/asl_model.keras`, or the legacy `saved_model/asl_model/` exists
+- Run `python -m scripts.train_model` to train a new model and export TensorFlow Lite
 - Check that TensorFlow is properly installed: `python -c "import tensorflow as tf; print(tf.__version__)"`
 
 ### Low Accuracy

@@ -23,6 +23,7 @@ asl_data.csv
 *.h5
 *.pb
 *.keras
+*.tflite
 saved_model/
 
 # IDEs

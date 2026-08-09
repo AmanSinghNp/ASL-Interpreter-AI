@@ -25,7 +25,8 @@ from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from utils import ASL_LETTERS, CSV_FILE, CLASSES_PATH
+from scripts.export_tflite import export_tflite
+from utils import CSV_FILE, CLASSES_PATH, KERAS_MODEL_PATH, TFLITE_MODEL_PATH
 
 
 def parse_args():
@@ -174,6 +175,15 @@ def train_model(args):
     model = create_model(input_dim=X.shape[1], num_classes=num_classes)
     model.summary()
     
+    # Create the output directory before ModelCheckpoint starts writing.
+    os.makedirs(os.path.dirname(KERAS_MODEL_PATH), exist_ok=True)
+
+    # Prevent an interrupted/failed retraining run from leaving an older
+    # TFLite artifact that the app could accidentally prefer.
+    if os.path.exists(TFLITE_MODEL_PATH):
+        os.remove(TFLITE_MODEL_PATH)
+        print(f"Removed previous TensorFlow Lite model: {TFLITE_MODEL_PATH}")
+
     # Define callbacks
     callbacks = [
         keras.callbacks.EarlyStopping(
@@ -239,14 +249,25 @@ def train_model(args):
     print("\n" + "-" * 40)
     print("Step 7: Saving model...")
     print("-" * 40)
-    os.makedirs('saved_model', exist_ok=True)
-    model.save('saved_model/asl_model')
-    print("Model saved to: saved_model/asl_model/")
+    model.save(KERAS_MODEL_PATH)
+    print(f"Model saved to: {KERAS_MODEL_PATH}")
     
     # Save label encoder classes for reference (used by the app for correct mapping)
     with open(CLASSES_PATH, 'w', encoding='utf-8') as f:
         f.write('\n'.join(label_encoder.classes_))
     print(f"Classes saved to: {CLASSES_PATH}")
+
+    # Export the same model used by the app's fast inference backend.
+    try:
+        export_tflite(KERAS_MODEL_PATH, TFLITE_MODEL_PATH)
+    except Exception as error:
+        # Never let the app silently use a TFLite model from an older training
+        # run alongside the new classes/Keras artifact.
+        if os.path.exists(TFLITE_MODEL_PATH):
+            os.remove(TFLITE_MODEL_PATH)
+            print(f"Removed stale TensorFlow Lite model: {TFLITE_MODEL_PATH}")
+        print(f"Warning: TensorFlow Lite export failed: {error}")
+        print("The Keras model is still available for fallback inference.")
     
     print("\n" + "=" * 60)
     print("Training Complete!")

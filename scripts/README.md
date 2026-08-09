@@ -82,10 +82,23 @@ python -m scripts.train_model --epochs 100 --batch_size 64
 | `--no_plots` | `false` | Skip generating visualization plots |
 
 **Output:**
-- `saved_model/asl_model/` - TensorFlow SavedModel
+- `saved_model/asl_model.keras` - Keras model used as a fallback
+- `saved_model/asl_model.tflite` - Optimized TensorFlow Lite model used by the app
 - `saved_model/classes.txt` - List of class labels
 - `training_history.png` - Accuracy/loss plots
 - `confusion_matrix.png` - Per-class performance visualization
+
+Training automatically exports the TensorFlow Lite model. To export an existing
+Keras or legacy SavedModel manually:
+
+```bash
+python -m scripts.export_tflite
+python -m scripts.export_tflite --model-path path/to/model.keras --output path/to/model.tflite
+python -m scripts.export_tflite --model-path saved_model/asl_model --output saved_model/asl_model.tflite
+```
+
+The export uses dynamic-range weight quantization by default while preserving
+float32 inputs and outputs.
 
 ## Model Architecture
 
@@ -163,11 +176,13 @@ python -m scripts.process_dataset
 | :--- | :---- | :----- |
 | `data_collection.py` | Webcam | `asl_data.csv` |
 | `process_dataset.py` | Image folders | `asl_data.csv` |
-| `train_model.py` | `asl_data.csv` | `saved_model/asl_model/` |
+| `train_model.py` | `asl_data.csv` | `saved_model/asl_model.keras` + `.tflite` |
+| `export_tflite.py` | Keras/SavedModel artifact | `.tflite` model |
 
 ## Notes
 
 - Letters **J** and **Z** are excluded because they require motion/gesture recognition
 - The model only supports static hand signs
 - For production use, collect data from multiple signers for better generalization
+- The desktop app prefers TensorFlow Lite and falls back to Keras or the legacy SavedModel
 - All scripts can be run as modules from the project root using `python -m scripts.<script_name>`

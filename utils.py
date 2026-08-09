@@ -7,8 +7,12 @@ import os
 import numpy as np
 
 # --- Configuration Constants ---
+# Legacy SavedModel path retained for backwards compatibility.
 MODEL_PATH = 'saved_model/asl_model'
+KERAS_MODEL_PATH = 'saved_model/asl_model.keras'
+TFLITE_MODEL_PATH = 'saved_model/asl_model.tflite'
 CLASSES_PATH = 'saved_model/classes.txt'
+FEATURE_COUNT = 42
 CONFIDENCE_THRESHOLD = 0.7
 STABILITY_THRESHOLD = 5  # Number of consistent frames for stability
 CSV_FILE = 'asl_data.csv'

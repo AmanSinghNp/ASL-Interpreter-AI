@@ -6,31 +6,33 @@ Real-time American Sign Language recognition using MediaPipe and TensorFlow.
 import cv2
 import mediapipe as mp
 import numpy as np
-import tensorflow as tf
 import time
 
-from utils import MODEL_PATH, CONFIDENCE_THRESHOLD, STABILITY_THRESHOLD, normalize_landmarks, load_classes
+from model_runtime import load_classifier
+from utils import (
+    CONFIDENCE_THRESHOLD,
+    KERAS_MODEL_PATH,
+    MODEL_PATH,
+    STABILITY_THRESHOLD,
+    TFLITE_MODEL_PATH,
+    load_classes,
+    normalize_landmarks,
+)
 
 # --- Model Loading ---
 print("Loading model...")
 try:
-    model = tf.keras.models.load_model(MODEL_PATH)
-    print("Model loaded successfully!")
-
     # Load the specific classes this model was trained on (saved during training)
     ASL_LETTERS = load_classes()
-    out_dim = model.output_shape[-1]
-    if out_dim != len(ASL_LETTERS):
-        print("Error: Model output size does not match loaded class labels.")
-        print(f"  model.output_shape[-1] = {out_dim}")
-        print(f"  len(classes)          = {len(ASL_LETTERS)}")
-        print("Fix: re-run processing + training so saved_model/classes.txt matches the model.")
-        exit(1)
-
+    classifier = load_classifier(expected_output_size=len(ASL_LETTERS))
+    print(f"{classifier.backend.upper()} model loaded successfully!")
     print(f"Loaded {len(ASL_LETTERS)} classes: {', '.join(ASL_LETTERS)}")
 except Exception as e:
     print(f"Error loading model: {e}")
-    print(f"Make sure the model exists at: {MODEL_PATH}")
+    print(
+        "Make sure a model exists at one of: "
+        f"{TFLITE_MODEL_PATH}, {KERAS_MODEL_PATH}, or {MODEL_PATH}"
+    )
     print("Run `python -m scripts.train_model` first if you haven't.")
     exit(1)
 
@@ -202,7 +204,7 @@ def main():
                 if features is not None:
                     try:
                         # Get model prediction
-                        prediction = model.predict(features, verbose=0)
+                        prediction = classifier.predict(features)
                         predicted_index = np.argmax(prediction)
                         confidence_val = float(np.max(prediction))
                         predicted_letter = ASL_LETTERS[predicted_index]
